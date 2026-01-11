@@ -1,11 +1,12 @@
+"use client"
 import React, { useRef, useState, useEffect, Suspense } from 'react';
 import Webcam from 'react-webcam';
 import { Canvas, useFrame } from '@react-three/fiber'
 import { Physics, RigidBody, CuboidCollider } from '@react-three/rapier'
-import { OrbitControls, Environment, Sky, Grid, useTexture, Text } from '@react-three/drei'
+import { OrbitControls, Environment, Sky, Grid, Text } from '@react-three/drei'
 import { GoogleGenerativeAI } from "@google/generative-ai"
 
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY
+const API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY
 const genAI = new GoogleGenerativeAI(API_KEY)
 
 const DENSITIES = {
@@ -51,13 +52,18 @@ function App() {
   const [magnitude, setMagnitude] = useState(0.0);
   const [advice, setAdvice] = useState("");
   const [detections, setDetections] = useState([]);
-  const [isProcessing, setIsProcessing] = useState(false); // New lock state
-  const [mode] = useState(new URLSearchParams(window.location.search).get("mode") || "laptop");
+  const [isProcessing, setIsProcessing] = useState(false);
   const [previewImage, setPreviewImage] = useState(null)
   const [detectedObjects, setDetectedObjects] = useState([])
   const [loading, setLoading] = useState(false)
   const [status, setStatus] = useState("Waiting for video upload...")
 
+  const [mode, setMode] = useState("laptop");
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setMode(params.get("mode") || "laptop");
+  }, []);
 
   const analyzeVideo = async (file) => {
     setLoading(true)
@@ -90,7 +96,6 @@ function App() {
 
       setStatus("Mapping Room...")
 
-      // Using the latest available stable endpoint
       const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" })
 
       const prompt = `
@@ -118,7 +123,6 @@ function App() {
       
       const processed = parsed.map(obj => ({
         ...obj,
-        // Enforce slightly bigger sizes if the AI estimates too small
         size: obj.size.map(s => Math.max(s * 1.2, 0.5)), 
         x: Number(obj.x) || 0,
         z: Number(obj.z) || 0
@@ -142,19 +146,17 @@ function App() {
   }, [magnitude]);
 
   const processFrame = async () => {
-    // Guard clause: if webcam isn't ready, wait and try again
     if (!webcamRef.current) {
       setTimeout(processFrame, 500);
       return;
     }
 
-    // If we are already mid-fetch, don't do anything (The Lock)
     if (isProcessing) return;
 
     setIsProcessing(true);
     try {
       const imageSrc = webcamRef.current.getScreenshot({
-        width: 320, // Keep this small!
+        width: 320,
         height: 240
       });
 
@@ -162,7 +164,6 @@ function App() {
         const response = await fetch("/api/analyze", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          // Use magRef.current so we don't depend on 'magnitude' state in the effect
           body: JSON.stringify({ image: imageSrc, magnitude: parseFloat(magRef.current) })
         });
 
@@ -182,10 +183,8 @@ function App() {
     }
   };
 
-  // Start the chain ONCE on mount
   useEffect(() => {
     processFrame();
-    // Empty dependency array ensures this loop never "restarts" and stacks up
   }, []);
 
   const drawOnCanvas = (dets) => {
@@ -216,7 +215,7 @@ function App() {
   };
 
   useEffect(() => {
-    const interval = setInterval(processFrame, 500); // Process 2 times per second
+    const interval = setInterval(processFrame, 500);
     return () => clearInterval(interval);
   }, [magnitude]);
 
@@ -225,10 +224,12 @@ function App() {
       const res = await fetch("/api/state");
       const state = await res.json();
       
-      if (mode === "phone") {
-        setMagnitude(state.magnitude); // Phone gets magnitude from Laptop
-      } else {
-        setDetections(state.detections); // Laptop gets boxes from Phone
+      if (mode === "phone" && typeof state.magnitude === "number") {
+        setMagnitude(state.magnitude);
+      }
+
+      if (mode !== "phone" && state.detections) {
+        setDetections(state.detections);
       }
     };
     const interval = setInterval(sync, 500);
@@ -243,7 +244,7 @@ function App() {
           audio={false}
           screenshotFormat="image/jpeg"
           videoConstraints={{
-            facingMode: "environment", // This forces the REAR camera
+            facingMode: "environment",
             width: { ideal: 640 },
             height: { ideal: 480 }
           }}
@@ -251,13 +252,12 @@ function App() {
             position: 'absolute',
             top: 0,
             left: 0,
-            width: '100vw', // Make it responsive for phone screens
+            width: '100vw',
             height: 'auto',
             zIndex: 1
           }}
         />
 
-        {/* Canvas must be ABSOLUTE and match the Video exactly */}
         <canvas
           ref={canvasRef}
           width={640}
@@ -268,8 +268,8 @@ function App() {
             left: 0,
             width: '640px',
             height: '480px',
-            zIndex: 2, // Sits on top of the webcam
-            pointerEvents: 'none' // Allows clicks to pass through to the video if needed
+            zIndex: 2,
+            pointerEvents: 'none'
           }}
         />
       </div>
@@ -277,50 +277,56 @@ function App() {
   }
 
   return (
-    <div style={{ width: '100vw', height: '100vh', background: '#050505', overflow: 'hidden', fontFamily: 'monospace' }}>
-      <style>{`
-        body { margin: 0; padding: 0; overflow: hidden; background: #050505; }
-        canvas { display: block; width: 100vw !important; height: 100vh !important; }
-      `}</style>
-
+    <div style={{ width: '100vw', height: '100vh', background: '#050505', overflow: 'hidden', fontFamily: 'monospace', position: 'relative' }}>
       {/* Sidebar UI */}
       <div style={{
-        left: '20px', top: '20px', position: 'absolute', zIndex: 10, padding: '30px', color: 'white',
-        background: 'rgba(10,10,10,0.55)', width: 'auto',
-        borderRight: '1px solid #333', display: 'flex', flexDirection: 'column', gap: '20px',
-        height: 'auto'
+        left: '20px', 
+        top: '20px', 
+        position: 'absolute', 
+        zIndex: 10, 
+        padding: '30px', 
+        color: 'white',
+        background: 'rgba(10,10,10,0.85)', 
+        width: 'auto',
+        borderRight: '1px solid #333', 
+        display: 'flex', 
+        flexDirection: 'column', 
+        gap: '20px',
+        height: 'auto',
+        pointerEvents: 'auto'
       }}>
         <h1 style={{ color: '#00ffcc', letterSpacing: '4px', fontSize: '22px', margin: 0 }}>QUAKEPROOF</h1>
         <div style={{ height: '2px', background: 'linear-gradient(90deg, #00ffcc, transparent)' }} />
         
         <div style={{ padding: '15px', background: '#111', borderRadius: '4px', border: '1px solid #222' }}>
-          <input type="file" accept="video/*" onChange={(e) => e.target.files[0] && analyzeVideo(e.target.files[0])} style={{ width: '100%' }} />
-          <p style={{ fontSize: '12px', color: loading ? '#ffcc00' : '#00ffcc', marginTop: '10px' }}>{status}</p>
-        </div>
-
-        {/* <div>
-          <label className="block mb-4 text-xl">Simulate Intensity: {magnitude}</label>
           <input 
-            type="range" min="0" max="9" step="0.1" 
-            value={magnitude} 
-            onChange={async (e) => {
-              const val = e.target.value;
-              setMagnitude(val);
-              await fetch("/api/update_magnitude", {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({magnitude: val})
-              });
-            }}
-            className="w-full h-4 bg-blue-700 rounded-lg appearance-none cursor-pointer"
+            ref={(el) => { if (el) window.fileInput = el; }}
+            type="file" 
+            accept="video/*" 
+            onChange={(e) => e.target.files[0] && analyzeVideo(e.target.files[0])} 
+            style={{ display: 'none' }} 
+            id="video-upload"
           />
-          
-          <button onClick={getAdvice} className="mt-8 bg-blue-600 p-4 w-full rounded-xl text-2xl font-bold">
-            Get Improvements
+          <button 
+            onClick={() => document.getElementById('video-upload').click()}
+            style={{ 
+              display: 'block', 
+              width: '100%', 
+              padding: '12px', 
+              background: '#222', 
+              color: '#00ffcc', 
+              textAlign: 'center', 
+              cursor: 'pointer',
+              border: '1px solid #00ffcc',
+              borderRadius: '4px',
+              fontSize: '14px',
+              fontWeight: 'bold'
+            }}
+          >
+            UPLOAD ROOM VIDEO
           </button>
-          
-          {advice && <div className="mt-4 p-6 bg-gray-800 rounded-lg border-l-4 border-blue-500">{advice}</div>}
-        </div> */}
+          <p style={{ fontSize: '11px', color: loading ? '#ffcc00' : '#00ffcc', marginTop: '10px', textAlign: 'center' }}>{status}</p>
+        </div>
 
         {detectedObjects.length > 0 && (
           <div style={{ background: '#111', padding: '20px', borderRadius: '4px' }}>
@@ -351,15 +357,15 @@ function App() {
             </div>
             <button 
                 onClick={() => setMagnitude(0)} 
-                style={{ marginTop: '20px', width: '100%', padding: '10px', background: '#222', color: '#fff', border: '1px solid #444', cursor: 'pointer' }}
+                style={{ marginTop: '20px', width: '100%', padding: '10px', background: '#222', color: '#fff', border: '1px solid #444', cursor: 'pointer', borderRadius: '4px' }}
             >
                 STOP SIMULATION
             </button>
-            <button onClick={getAdvice} className="mt-8 bg-blue-600 p-4 w-full rounded-xl text-2xl font-bold">
+            <button onClick={getAdvice} style={{ marginTop: '20px', width: '100%', padding: '16px', background: '#00d492', color: '#fff', border: 'none', cursor: 'pointer', borderRadius: '12px', fontSize: '18px', fontWeight: 'bold' }}>
               Get Improvements
             </button>
             
-            {advice && <div className="mt-4 p-6 bg-gray-800 rounded-lg border-l-4 border-blue-500">{advice}</div>}
+            {advice && <div style={{ marginTop: '16px', padding: '24px', background: '#1f2937', borderRadius: '8px', borderLeft: '4px solid #3b82f6' }}>{advice}</div>}
           </div>
         )}
       </div>
@@ -387,12 +393,15 @@ function App() {
                   mass={mass}
                   restitution={0.1}
                   friction={1.0}
+                  type="dynamic"
+                  linearVelocity={[0, 0, 0]}
+                  angularVelocity={[0, 0, 0]}
+                  gravityScale={1}
                 >
                   <mesh castShadow>
                     <boxGeometry args={obj.size} />
                     <meshStandardMaterial color={obj.color} metalness={0.5} roughness={0.2} />
                   </mesh>
-                  {/* Visual Label */}
                   <Text
                     position={[0, obj.size[1] / 2 + 0.5, 0]}
                     fontSize={0.4}
@@ -408,7 +417,7 @@ function App() {
           </Physics>
         </Suspense>
 
-        <OrbitControls makeDefault />
+        <OrbitControls makeDefault target={[0, 0, 0]} />
         <Environment preset="night" />
       </Canvas>
     </div>
