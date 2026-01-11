@@ -74,8 +74,6 @@ async def update_mag(data: dict = Body(...)):
     shared_state["magnitude"] = float(data.get("magnitude", 5.0))
     return {"status": "ok"}
 
-VALID_CLASSES = [56, 57, 58, 59, 60, 62, 63, 72]
-
 @app.post("/analyze")
 async def analyze(data: dict = Body(...)):
     # 1. Decode Base64 Image
@@ -102,9 +100,6 @@ async def analyze(data: dict = Body(...)):
             x1, y1, x2, y2 = box.xyxy[0].tolist()
             label = model_yolo.names[int(box.cls[0])]
             track_id = int(box.id[0]) if box.id is not None else 0
-
-            if label.lower() == "person":
-                continue
             
             risk = calculate_risk(y2-y1, x2-x1, data['magnitude'], ratio)
             
@@ -128,7 +123,7 @@ async def recommend(data: dict = Body(...)):
         if not risky_items:
             return {"advice": "Room looks secure! No major hazards detected."}
 
-        prompt = f"In an earthquake, these items might fall: {', '.join(risky_items)}. Provide a priority order of how to secure/where to move these objects to prepare, or nothing if not needed. Keep the response under 100 words in bullet point format."
+        prompt = f"In an earthquake, these items might fall: {', '.join(risky_items)}. Provide a priority order of how to secure/where to move these objects to prepare, or nothing if not needed. Keep response under 100 words in bullet point format."
         
         # Try the real AI
         try:
