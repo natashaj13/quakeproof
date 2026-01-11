@@ -17,18 +17,7 @@ const DENSITIES = {
   monitor: 50,
   chair: 70,
   lamp: 40,
-  plant: 120,
   default: 80
-}
-
-function PhotoPlane({ url }) {
-  const texture = useTexture(url)
-  return (
-    <mesh position={[0, 10, -15]} scale={[45, 25, 1]}>
-      <planeGeometry />
-      <meshBasicMaterial map={texture} transparent opacity={0.2} />
-    </mesh>
-  )
 }
 
 function Room({ magnitude }) {
@@ -60,7 +49,7 @@ export default function App() {
   const [previewImage, setPreviewImage] = useState(null)
   const [detectedObjects, setDetectedObjects] = useState([])
   const [loading, setLoading] = useState(false)
-  const [status, setStatus] = useState("System Standby: Upload video...")
+  const [status, setStatus] = useState("Waiting for video upload...")
 
   const analyzeVideo = async (file) => {
     setLoading(true)
@@ -98,7 +87,7 @@ export default function App() {
 
       const prompt = `
         Act as a 3D LiDAR scanner. Identify major structural objects:
-        Types: [bookshelf, refrigerator, chair, table, lamp, tv, plant, sofa, monitor]
+        Types: [bookshelf, refrigerator, chair, table, lamp, tv, sofa, monitor]
         
         For each object, estimate:
         1. type: (from the list above)
@@ -140,11 +129,17 @@ export default function App() {
 
   return (
     <div style={{ width: '100vw', height: '100vh', background: '#050505', overflow: 'hidden', fontFamily: 'monospace' }}>
+      <style>{`
+        body { margin: 0; padding: 0; overflow: hidden; background: #050505; }
+        canvas { display: block; width: 100vw !important; height: 100vh !important; }
+      `}</style>
+
       {/* Sidebar UI */}
       <div style={{
-        position: 'absolute', zIndex: 10, padding: '30px', color: 'white',
-        background: 'rgba(10,10,10,0.95)', width: '350px', height: '100vh',
-        borderRight: '1px solid #333', display: 'flex', flexDirection: 'column', gap: '20px'
+        left: '20px', top: '20px', position: 'absolute', zIndex: 10, padding: '30px', color: 'white',
+        background: 'rgba(10,10,10,0.55)', width: 'auto',
+        borderRight: '1px solid #333', display: 'flex', flexDirection: 'column', gap: '20px',
+        height: 'auto'
       }}>
         <h1 style={{ color: '#00ffcc', letterSpacing: '4px', fontSize: '22px', margin: 0 }}>QUAKEPROOF AI</h1>
         <div style={{ height: '2px', background: 'linear-gradient(90deg, #00ffcc, transparent)' }} />
@@ -176,13 +171,13 @@ export default function App() {
         )}
       </div>
 
-      <Canvas shadows camera={{ position: [15, 15, 15], fov: 45 }}>
+      <Canvas shadows camera={{ position: [8, 8, 8], fov: 45 }}>
         <Sky sunPosition={[100, 10, 100]} />
         <ambientLight intensity={0.5} />
         <pointLight position={[20, 20, 20]} castShadow intensity={1.5} />
 
         <Suspense fallback={null}>
-          {previewImage && <PhotoPlane url={previewImage} />}
+          {previewImage}
 
           <Physics gravity={[0, -9.81, 0]}>
             <Room magnitude={magnitude} />
