@@ -54,7 +54,7 @@ export default function Home() {
       <nav className="fixed top-0 w-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-md z-50 border-b border-slate-200 dark:border-slate-800">
         <div className="max-w-4xl mx-auto px-6 py-4 flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <Image className="dark:invert" src="/quake_proof.svg" alt="Logo" width={24} height={24} />
+            <Image className="dark:invert" src="/logo2.svg" alt="Logo" width={100} height={100} />
             <span className="font-bold tracking-tighter text-xl text-slate-900 dark:text-white uppercase">QuakeProof</span>
           </div>
           <ul className="flex gap-8 text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
