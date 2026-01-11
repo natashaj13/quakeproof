@@ -36,7 +36,7 @@ export default function Home() {
     };
 
     fetchQuakes();
-    const interval = setInterval(fetchQuakes, 300000); // Refresh every 5 minutes
+    const interval = setInterval(fetchQuakes, 100000); // Refresh every 1 minute
     return () => clearInterval(interval);
   }, []);
 
@@ -54,26 +54,26 @@ export default function Home() {
       <nav className="fixed top-0 w-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-md z-50 border-b border-slate-200 dark:border-slate-800">
         <div className="max-w-4xl mx-auto px-6 py-4 flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <Image className="dark:invert" src="/logo2.svg" alt="Logo" width={100} height={100} />
-            <span className="font-bold tracking-tighter text-xl text-slate-900 dark:text-white uppercase">QuakeProof</span>
+            <Image className="dark:invert" src="/icon.svg" alt="Logo" width={100} height={100} />
+            <span className="font-bold tracking-tighter text-xl text-slate-900 dark:text-white uppercase"></span>
           </div>
           <ul className="flex gap-8 text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
-            <li><button onClick={() => scrollToSection('hero')} className="hover:text-orange-600 transition">Home</button></li>
-            <li><button onClick={() => scrollToSection('about')} className="hover:text-orange-600 transition">About</button></li>
-            <li><button onClick={() => scrollToSection('contact')} className="hover:text-orange-600 transition">Contact</button></li>
+            <li><button onClick={() => scrollToSection('hero')} className="hover:text-emerald-300 transition">Home</button></li>
+            <li><button onClick={() => scrollToSection('about')} className="hover:text-emerald-300 transition">About</button></li>
+            <li><button onClick={() => scrollToSection('contact')} className="hover:text-emerald-300 transition">Contact</button></li>
           </ul>
         </div>
 
         {/* Live Seismic Ticker with Real Data */}
-        <div className="ticker-container bg-slate-900 dark:bg-orange-600 overflow-hidden py-1.5 border-y border-slate-800 dark:border-orange-500 cursor-help">
+        <div className="ticker-container bg-slate-900 dark:bg-emerald-500 overflow-hidden py-1.5 border-y border-slate-800 dark:border-emerald-500 cursor-help">
           <div className="animate-marquee whitespace-nowrap flex items-center gap-12 text-[10px] font-bold uppercase tracking-[0.2em] text-white">
             {quakes.length > 0 ? (
               [...quakes, ...quakes].map((quake, index) => (
                 <span key={`${quake.id}-${index}`} className="flex items-center gap-4">
-                  <span className="text-orange-400 dark:text-slate-900 font-black">●</span> 
+                  <span className="text-emerald-500 dark:text-slate-900 font-black">●</span> 
                   
                   {/* Magnitude Color Coding */}
-                  <span className={quake.mag >= 4.5 ? "text-red-500 dark:text-white font-black underline decoration-2" : ""}>
+                  <span className={quake.mag >= 4.5 ? "text-emerald-300 dark:text-white font-black underline decoration-2" : ""}>
                     M {quake.mag.toFixed(1)}
                   </span>
                   
@@ -93,11 +93,11 @@ export default function Home() {
         {/* Section 1: Hero with Tectonic Gradient */}
         <section id="hero" className="relative flex min-h-screen w-full flex-col items-center justify-center px-6 overflow-hidden">
           {/* Background Gradient Layer */}
-          <div className="absolute inset-0 -z-10 bg-gradient-to-br from-zinc-100 via-white to-orange-50 dark:from-zinc-900 dark:via-black dark:to-orange-950/20 animate-tectonic" />
+          <div className="absolute inset-0 -z-10 bg-gradient-to-br from-slate-50 via-white to-emerald-50/50 dark:from-slate-950 dark:via-black dark:to-emerald-950/30 animate-tectonic" />
           
           <div className="max-w-3xl w-full text-center sm:text-left">
             <h1 className="text-5xl md:text-7xl font-black leading-none tracking-tighter mb-6">
-              STAY <span className="text-orange-600">GROUNDED.</span><br />
+              STAY <span className="text-emerald-500">GROUNDED.</span><br />
               STAY SAFE.
             </h1>
             <p className="max-w-md text-xl leading-relaxed text-zinc-600 dark:text-zinc-400 mb-10">
@@ -105,7 +105,7 @@ export default function Home() {
             </p>
             <button 
               onClick={() => scrollToSection('about')}
-              className="bg-orange-600 hover:bg-orange-700 text-white px-8 py-4 rounded-full font-bold transition-all transform hover:scale-105 shadow-lg shadow-orange-600/20"
+              className="bg-emerald-600 hover:bg-emerald-300 text-white px-8 py-4 rounded-full font-bold transition-all transform hover:scale-105 shadow-lg shadow-emerald-200/20"
             >
               Explore Features
             </button>
@@ -116,7 +116,7 @@ export default function Home() {
         <section id="about" className="flex min-h-screen w-full flex-col items-center justify-center px-6 bg-white dark:bg-zinc-950">
           <div className="max-w-4xl grid md:grid-cols-2 gap-12 items-center">
             <div>
-              <h2 className="text-4xl font-bold mb-6 border-l-4 border-orange-600 pl-4">Seismic Integrity</h2>
+              <h2 className="text-4xl font-black mb-6 border-l-4 border-emerald-500 pl-4">SEISMIC INTEGRITY</h2>
               <p className="text-lg leading-8 text-zinc-600 dark:text-zinc-400">
                 QuakeProof uses advanced sensors and tectonic data to provide 
                 up-to-the-second information on ground stability. Our mission is 
@@ -139,9 +139,9 @@ export default function Home() {
             <input 
               type="email" 
               placeholder="Enter your email" 
-              className="bg-zinc-800 border border-zinc-700 px-6 py-3 rounded-full focus:outline-none focus:ring-2 focus:ring-orange-600 w-64"
+              className="bg-zinc-800 border border-zinc-700 px-6 py-3 rounded-full focus:outline-none focus:ring-2 focus:ring-emerald-600 w-64"
             />
-            <button className="bg-orange-600 hover:bg-orange-500 px-8 py-3 rounded-full font-bold transition">
+            <button className="bg-emerald-600 hover:bg-emerald-400 px-8 py-3 rounded-full font-bold transition">
               Get Started
             </button>
           </div>
