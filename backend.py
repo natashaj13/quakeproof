@@ -8,13 +8,20 @@ from fastapi.middleware.cors import CORSMiddleware
 from ultralytics import YOLO
 
 import traceback
+import os
+from dotenv import load_dotenv
 
 
 # --- CONFIGURATION ---
 
-genai.configure(api_key="AIzaSyDIpDomk0etveIUco2igmLFJmSTr8gUmaQ")
+# Load .env (if present) and read the Gemini API key
+load_dotenv()
+api_key = os.getenv("VITE_GEMINI_API_KEY")
+if not api_key:
+    raise RuntimeError("VITE_GEMINI_API_KEY not found in environment or .env")
+genai.configure(api_key=api_key)
 model_gemini = genai.GenerativeModel('gemini-2.5-flash-lite')
-model_yolo = YOLO('yolov8n.pt') # Lightweight for speed
+model_yolo = YOLO('best.pt') # Lightweight for speed
 
 app = FastAPI()
 
