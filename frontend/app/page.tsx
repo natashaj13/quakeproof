@@ -52,12 +52,12 @@ export default function Home() {
     
       {/* Navigation Menu */}
       <nav className="fixed top-0 w-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-md z-50 border-b border-slate-200 dark:border-slate-800">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex justify-between items-center">
+        <div className="max-w-4xl mx-auto px-6 py-2 flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <Image className="dark:invert" src="/icon.svg" alt="Logo" width={100} height={100} />
+            <Image className="dark:invert" src="/file.svg" alt="Logo" width={100} height={100} />
             <span className="font-bold tracking-tighter text-xl text-slate-900 dark:text-white uppercase"></span>
           </div>
-          <ul className="flex gap-8 text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+          <ul className="flex gap-8 font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
             <li><button onClick={() => scrollToSection('hero')} className="hover:text-emerald-300 transition">Home</button></li>
             <li><button onClick={() => scrollToSection('about')} className="hover:text-emerald-300 transition">About</button></li>
             <li><button onClick={() => scrollToSection('contact')} className="hover:text-emerald-300 transition">Contact</button></li>
@@ -107,7 +107,7 @@ export default function Home() {
               onClick={() => scrollToSection('about')}
               className="bg-emerald-600 hover:bg-emerald-300 text-white px-8 py-4 rounded-full font-bold transition-all transform hover:scale-105 shadow-lg shadow-emerald-200/20"
             >
-              Explore Features
+              Prepare Your Home
             </button>
           </div>
         </section>
