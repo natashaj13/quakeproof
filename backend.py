@@ -123,25 +123,12 @@ async def analyze(data: dict = Body(...)):
 @app.post("/recommend")
 async def recommend(data: dict = Body(...)):
     try:
-        risky_items = [d['label'] for d in data.get('detections', []) if d.get('risk', 0) > 50]
-        raw_detections = data.get('detections', [])
-        
-        # 1. Use a dictionary to de-duplicate by 'id'
-        # This keeps only the LATEST version of each unique object seen
-        unique_objects = {}
-        for d in raw_detections:
-            obj_id = d.get('id')
-            # Only add if it has an ID and high risk
-            if obj_id and d.get('risk', 0) > 50:
-                unique_objects[obj_id] = d['label']
-
-        # 2. Extract just the names (e.g., ["bookshelf", "tv"])
-        risky_items = list(unique_objects.values())
+        risky_items = data.get('detections', [])
 
         if not risky_items:
             return {"advice": "Room looks secure! No major hazards detected."}
 
-        prompt = f"In an earthquake, these items might fall: {', '.join(risky_items)}. Provide a priority order of objects to secure and how, or none of none needed. Keep the response under 100 words in bullet point format."
+        prompt = f"In an earthquake, these items might fall: {', '.join(risky_items)}. Provide a priority order of how to secure/where to move these objects to prepare, or nothing if not needed. Keep the response under 100 words in bullet point format."
         
         # Try the real AI
         try:

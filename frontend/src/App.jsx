@@ -209,7 +209,7 @@ function App() {
     const res = await fetch("/api/recommend", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ detections })
+      body: JSON.stringify({ detections: detectedObjects.map(obj => obj.type) })
     });
     const data = await res.json();
     setAdvice(data.advice);
@@ -257,7 +257,6 @@ function App() {
           }}
         />
 
-        {/* Canvas must be ABSOLUTE and match the Video exactly */}
         <canvas
           ref={canvasRef}
           width={640}
@@ -286,7 +285,7 @@ function App() {
       {/* Sidebar UI */}
       <div style={{
         left: '20px', top: '20px', position: 'absolute', zIndex: 10, padding: '30px', color: 'white',
-        background: 'rgba(10,10,10,0.55)', width: 'auto',
+        background: 'rgba(10,10,10,0.55)', width: '350px',
         borderRight: '1px solid #333', display: 'flex', flexDirection: 'column', gap: '20px',
         height: 'auto'
       }}>
@@ -297,30 +296,6 @@ function App() {
           <input type="file" accept="video/*" onChange={(e) => e.target.files[0] && analyzeVideo(e.target.files[0])} style={{ width: '100%' }} />
           <p style={{ fontSize: '12px', color: loading ? '#ffcc00' : '#00ffcc', marginTop: '10px' }}>{status}</p>
         </div>
-
-        {/* <div>
-          <label className="block mb-4 text-xl">Simulate Intensity: {magnitude}</label>
-          <input 
-            type="range" min="0" max="9" step="0.1" 
-            value={magnitude} 
-            onChange={async (e) => {
-              const val = e.target.value;
-              setMagnitude(val);
-              await fetch("/api/update_magnitude", {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({magnitude: val})
-              });
-            }}
-            className="w-full h-4 bg-blue-700 rounded-lg appearance-none cursor-pointer"
-          />
-          
-          <button onClick={getAdvice} className="mt-8 bg-blue-600 p-4 w-full rounded-xl text-2xl font-bold">
-            Get Improvements
-          </button>
-          
-          {advice && <div className="mt-4 p-6 bg-gray-800 rounded-lg border-l-4 border-blue-500">{advice}</div>}
-        </div> */}
 
         {detectedObjects.length > 0 && (
           <div style={{ background: '#111', padding: '20px', borderRadius: '4px' }}>
@@ -351,12 +326,12 @@ function App() {
             </div>
             <button 
                 onClick={() => setMagnitude(0)} 
-                style={{ marginTop: '20px', width: '100%', padding: '10px', background: '#222', color: '#fff', border: '1px solid #444', cursor: 'pointer' }}
+                style={{ marginTop: '20px', width: '100%', padding: '10px', marginBottom: '40px', background: '#222', color: '#fff', border: '1px solid #444', cursor: 'pointer' }}
             >
                 STOP SIMULATION
             </button>
-            <button onClick={getAdvice} className="mt-8 bg-blue-600 p-4 w-full rounded-xl text-2xl font-bold">
-              Get Improvements
+            <button onClick={getAdvice} style={{width: '100%', padding: '10px', marginBottom: '20px', background: '#222', color: '#fff', border: '1px solid #444', cursor: 'pointer' }}>
+              GET IMPROVEMENTS
             </button>
             
             {advice && <div className="mt-4 p-6 bg-gray-800 rounded-lg border-l-4 border-blue-500">{advice}</div>}
@@ -382,7 +357,7 @@ function App() {
               return (
                 <RigidBody
                   key={`${obj.type}-${i}`}
-                  position={[obj.x, obj.size[1] / 2, obj.z]}
+                  position={[obj.x, (obj.size[1] / 2) + 0.1, obj.z]}
                   colliders="cuboid"
                   mass={mass}
                   restitution={0.1}
