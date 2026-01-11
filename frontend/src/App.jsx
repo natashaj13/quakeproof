@@ -47,7 +47,6 @@ const processFrame = async () => {
           setDetections(data.detections);
           drawOnCanvas(data.detections);
       }
-      imageSrc = null
     }
   } catch (err) {
     console.error("Analysis stalled, retrying...", err);

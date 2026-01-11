@@ -12,7 +12,7 @@ import traceback
 
 # --- CONFIGURATION ---
 
-genai.configure(api_key="AIzaSyCYUzL_y8r-AUuSPiSbBahgmxclZd3pqNQ")
+genai.configure(api_key="AIzaSyDIpDomk0etveIUco2igmLFJmSTr8gUmaQ")
 model_gemini = genai.GenerativeModel('gemini-2.5-flash-lite')
 model_yolo = YOLO('yolov8n.pt') # Lightweight for speed
 
