@@ -287,7 +287,7 @@ function App() {
         padding: '30px', 
         color: 'white',
         background: 'rgba(10,10,10,0.85)', 
-        width: 'auto',
+        width: '30%',
         borderRight: '1px solid #333', 
         display: 'flex', 
         flexDirection: 'column', 
@@ -388,7 +388,7 @@ function App() {
               return (
                 <RigidBody
                   key={`${obj.type}-${i}`}
-                  position={[obj.x, obj.size[1] / 2, obj.z]}
+                  position={[obj.x, (obj.size[1] / 2) + 0.1, obj.z]}
                   colliders="cuboid"
                   mass={mass}
                   restitution={0.1}

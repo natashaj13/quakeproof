@@ -20,11 +20,11 @@ export default function Home() {
         {/* Section 1: Hero with Tectonic Gradient */}
         <section id="hero" className="relative flex min-h-screen w-full flex-col items-center justify-center px-6 overflow-hidden">
           {/* Background Gradient Layer */}
-          <div className="absolute inset-0 -z-10 bg-gradient-to-br from-zinc-100 via-white to-orange-50 dark:from-zinc-900 dark:via-black dark:to-orange-950/20 animate-tectonic" />
+          <div className="absolute inset-0 -z-10 bg-gradient-to-br from-slate-50 via-white to-emerald-50/50 dark:from-slate-950 dark:via-black dark:to-emerald-950/30 animate-tectonic" />
           
           <div className="max-w-3xl w-full text-center sm:text-left">
             <h1 className="text-5xl md:text-7xl font-black leading-none tracking-tighter mb-6">
-              STAY <span className="text-orange-600">GROUNDED.</span><br />
+              STAY <span className="text-emerald-500">GROUNDED.</span><br />
               STAY SAFE.
             </h1>
             <p className="max-w-md text-xl leading-relaxed text-zinc-600 dark:text-zinc-400 mb-10">
@@ -32,9 +32,9 @@ export default function Home() {
             </p>
             <button 
               onClick={() => router.push("/quake")}
-              className="bg-orange-600 hover:bg-orange-700 text-white px-8 py-4 rounded-full font-bold transition-all transform hover:scale-105 shadow-lg shadow-orange-600/20"
+              className="bg-emerald-600 hover:bg-emerald-300 text-white px-8 py-4 rounded-full font-bold transition-all transform hover:scale-105 shadow-lg shadow-emerald-200/20"
             >
-              Explore Features
+              Prepare Your Home
             </button>
           </div>
         </section>
@@ -43,7 +43,7 @@ export default function Home() {
         <section id="about" className="flex min-h-screen w-full flex-col items-center justify-center px-6 bg-white dark:bg-zinc-950">
           <div className="max-w-4xl grid md:grid-cols-2 gap-12 items-center">
             <div>
-              <h2 className="text-4xl font-bold mb-6 border-l-4 border-orange-600 pl-4">Seismic Integrity</h2>
+              <h2 className="text-4xl font-black mb-6 border-l-4 border-emerald-500 pl-4">SEISMIC INTEGRITY</h2>
               <p className="text-lg leading-8 text-zinc-600 dark:text-zinc-400">
                 QuakeProof uses advanced sensors and tectonic data to provide 
                 up-to-the-second information on ground stability. Our mission is 
@@ -66,9 +66,9 @@ export default function Home() {
             <input 
               type="email" 
               placeholder="Enter your email" 
-              className="bg-zinc-800 border border-zinc-700 px-6 py-3 rounded-full focus:outline-none focus:ring-2 focus:ring-orange-600 w-64"
+              className="bg-zinc-800 border border-zinc-700 px-6 py-3 rounded-full focus:outline-none focus:ring-2 focus:ring-emerald-600 w-64"
             />
-            <button className="bg-orange-600 hover:bg-orange-500 px-8 py-3 rounded-full font-bold transition">
+            <button className="bg-emerald-600 hover:bg-emerald-400 px-8 py-3 rounded-full font-bold transition">
               Get Started
             </button>
           </div>

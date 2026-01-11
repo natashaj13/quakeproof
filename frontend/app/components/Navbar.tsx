@@ -49,28 +49,28 @@ export default function Navbar() {
 
     return(
         <nav className="fixed top-0 w-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-md z-50 border-b border-slate-200 dark:border-slate-800">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex justify-between items-center">
+        <div className="max-w-4xl mx-auto px-6 py-2 flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <Image className="dark:invert" src="/logo2.svg" alt="Logo" width={100} height={100} />
-            <span className="font-bold tracking-tighter text-xl text-slate-900 dark:text-white uppercase">QuakeProof</span>
+            <Image className="dark:invert" src="/file.svg" alt="Logo" width={100} height={100} />
+            <span className="font-bold tracking-tighter text-xl text-slate-900 dark:text-white uppercase"></span>
           </div>
-          <ul className="flex gap-8 text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
-            <li><button onClick={() => scrollToSection('hero')} className="hover:text-orange-600 transition">Home</button></li>
-            <li><button onClick={() => scrollToSection('about')} className="hover:text-orange-600 transition">About</button></li>
-            <li><button onClick={() => scrollToSection('contact')} className="hover:text-orange-600 transition">Contact</button></li>
+          <ul className="flex gap-8 font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+            <li><button onClick={() => scrollToSection('hero')} className="hover:text-emerald-300 transition">Home</button></li>
+            <li><button onClick={() => scrollToSection('about')} className="hover:text-emerald-300 transition">About</button></li>
+            <li><button onClick={() => scrollToSection('contact')} className="hover:text-emerald-300 transition">Contact</button></li>
           </ul>
         </div>
 
         {/* Live Seismic Ticker with Real Data */}
-        <div className="ticker-container bg-slate-900 dark:bg-orange-600 overflow-hidden py-1.5 border-y border-slate-800 dark:border-orange-500 cursor-help">
+        <div className="ticker-container bg-slate-900 dark:bg-emerald-500 overflow-hidden py-1.5 border-y border-slate-800 dark:border-emerald-500 cursor-help">
           <div className="animate-marquee whitespace-nowrap flex items-center gap-12 text-[10px] font-bold uppercase tracking-[0.2em] text-white">
             {quakes.length > 0 ? (
               [...quakes, ...quakes].map((quake, index) => (
                 <span key={`${quake.id}-${index}`} className="flex items-center gap-4">
-                  <span className="text-orange-400 dark:text-slate-900 font-black">●</span> 
+                  <span className="text-emerald-500 dark:text-slate-900 font-black">●</span> 
                   
                   {/* Magnitude Color Coding */}
-                  <span className={quake.mag >= 4.5 ? "text-red-500 dark:text-white font-black underline decoration-2" : ""}>
+                  <span className={quake.mag >= 4.5 ? "text-emerald-300 dark:text-white font-black underline decoration-2" : ""}>
                     M {quake.mag.toFixed(1)}
                   </span>
                   
