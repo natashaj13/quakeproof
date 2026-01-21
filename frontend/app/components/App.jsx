@@ -205,13 +205,24 @@ function App() {
   };
 
   const getAdvice = async () => {
-    const res = await fetch("/api/recommend", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ detections: detectedObjects.map(obj => obj.type) })
-    });
-    const data = await res.json();
-    setAdvice(data.advice);
+    // const res = await fetch("/api/recommend", {
+    //   method: "POST",
+    //   headers: { "Content-Type": "application/json" },
+    //   body: JSON.stringify({ detections: detectedObjects.map(obj => obj.type) })
+    // });
+    // const data = await res.json();
+    // setAdvice(data.advice);
+
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" })
+    const risky_items = detectedObjects
+    const prompt = `In an earthquake, these items might fall: ${risky_items.join(", ")}. Provide a priority order of how to secure/where to move these objects to prepare, or nothing if not needed. Keep response under 100 words in bullet point format.`
+
+    const result = await model.generateContent({
+      contents: [{ role: "user", parts: [{ text: prompt }] }]
+    })
+
+    const text = result.response.text()
+    setAdvice(text);
   };
 
   useEffect(() => {
@@ -224,7 +235,7 @@ function App() {
       const res = await fetch("/api/state");
       const state = await res.json();
       
-      if (mode === "phone" && typeof state.magnitude === "number") {
+      if (mode === "phone") {
         setMagnitude(state.magnitude);
       }
 
@@ -277,7 +288,7 @@ function App() {
   }
 
   return (
-    <div style={{ width: '100vw', height: '100vh', background: '#050505', overflow: 'hidden', fontFamily: 'monospace', position: 'relative' }}>
+    <div style={{ width: '100vw', height: '100vh', background: '#050505', overflow: 'hidden', fontFamily: 'monospace', position: 'relative', paddingBottom: '20px'}}>
       {/* Sidebar UI */}
       <div style={{
         left: '20px', 
@@ -293,7 +304,8 @@ function App() {
         flexDirection: 'column', 
         gap: '20px',
         height: 'auto',
-        pointerEvents: 'auto'
+        pointerEvents: 'auto', 
+        overflowY: 'auto'
       }}>
         <h1 style={{ color: '#00ffcc', letterSpacing: '4px', fontSize: '22px', margin: 0 }}>QUAKEPROOF</h1>
         <div style={{ height: '2px', background: 'linear-gradient(90deg, #00ffcc, transparent)' }} />
@@ -364,8 +376,8 @@ function App() {
             <button onClick={getAdvice} style={{ marginTop: '20px', width: '100%', padding: '16px', background: '#00d492', color: '#fff', border: 'none', cursor: 'pointer', borderRadius: '12px', fontSize: '18px', fontWeight: 'bold' }}>
               Get Improvements
             </button>
-            
-            {advice && <div style={{ marginTop: '16px', padding: '24px', background: '#1f2937', borderRadius: '8px', borderLeft: '4px solid #3b82f6' }}>{advice}</div>}
+
+            {advice && <div style={{ marginTop: '16px', padding: '24px', background: '#1f2937', borderRadius: '8px', borderLeft: '4px solid #3b82f6', maxHeight: '150px', overflowY: 'auto' }}>{advice}</div>}
           </div>
         )}
       </div>
