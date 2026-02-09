@@ -3,10 +3,14 @@ import numpy as np
 import base64
 import random
 import google.generativeai as genai
-from fastapi import FastAPI, Body
+import tempfile
+import gc
+from PIL import Image
+from fastapi import FastAPI, Body, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from ultralytics import YOLO
 from fastapi.responses import JSONResponse
+
 
 import traceback
 import os
@@ -22,6 +26,7 @@ if not api_key:
 genai.configure(api_key=api_key)
 model_gemini = genai.GenerativeModel('gemini-3-flash-preview')
 model_yolo = YOLO('best.pt') # Lightweight for speed
+model_yolo.to('cpu')
 
 app = FastAPI()
 
@@ -30,12 +35,13 @@ origins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "https://flintiest-interdepartmentally-corene.ngrok-free.dev",
+    "https://quakeproof*.vercel.app",
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins, # Be specific here
-    allow_credentials=True,
+    allow_origins=["*"], # Be specific here
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -83,7 +89,7 @@ async def analyze(data: dict = Body(...)):
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
         # 2. YOLO Tracking
-        results = model_yolo.track(img, persist=True)[0]
+        results = model_yolo.predict(img, conf=0.3, imgsz=320)[0]
         
         # 3. Find Scaling Ratio (Look for a door or chair)
         ratio = 0.002 # Default fallback
@@ -148,46 +154,63 @@ async def recommend(data: dict = Body(...)):
         traceback.print_exc()
         return JSONResponse(content={"advice": "Internal Server Error."}, status_code=500)
 
+
 @app.post("/extract")
-async def extract(data: dict = Body(...)):
-    """
-    Takes a prompt and optional frames, returns AI-generated content.
-    Compatible with the frontend's analyzeVideo logic.
-    """
+async def extract(video: UploadFile = File(...), prompt: str = Form(...)):
+    cap = None
+    video_path = None
     try:
-        from PIL import Image
-        import io
-        
-        prompt_text = data.get("prompt", "")
-        frames = data.get("frames", [])
+        # Use a chunked write to keep RAM usage at near zero during upload
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as tmp:
+            while chunk := await video.read(1024 * 1024): # Read 1MB at a time
+                tmp.write(chunk)
+            video_path = tmp.name
 
-        if not prompt_text:
-            return JSONResponse(content={"error": "No prompt provided"}, status_code=400)
+        cap = cv2.VideoCapture(video_path)
+        
+        # Force OpenCV to use a smaller internal buffer if possible
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 360)
+        frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        
+        # 2. Pick only 2 frames (Start & End) to keep memory ultra-low
+        indices = [int(frame_count * 0.2), int(frame_count * 0.8)]
+        parts = [prompt]
 
-        # Build the content parts - use PIL Images for Gemini
-        parts = [prompt_text]
-        
-        # Add image frames - convert base64 to PIL Image objects
-        for frame in frames:
-            if "inlineData" in frame:
-                inline_data = frame["inlineData"]
-                base64_data = inline_data.get("data")
-                
-                # Decode base64 to PIL Image (Gemini SDK expects PIL Images)
-                image_bytes = base64.b64decode(base64_data)
-                pil_image = Image.open(io.BytesIO(image_bytes))
-                parts.append(pil_image)
-        
-        # Generate content
+        for idx in indices:
+            cap.set(cv2.CAP_PROP_POS_FRAMES, idx)
+            ret, frame = cap.read()
+            if not ret: continue
+
+            # 3. THE MAGIC LINE: Shrink to 240p immediately
+            # This reduces RAM usage from ~100MB per frame to ~2MB.
+            frame = cv2.resize(frame, (320, 240)) 
+            
+            # 4. Convert and add to Gemini parts
+            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            parts.append(Image.fromarray(frame_rgb))
+            
+            # 5. CLEAR RAM IMMEDIATELY inside the loop
+            del frame
+            del frame_rgb
+
+        # 6. Send to Gemini
         response = model_gemini.generate_content(parts)
+        
+        # 7. Final Cleanup of the parts list
+        del parts 
         
         return JSONResponse(content={"text": response.text})
 
     except Exception as e:
-        print("\n--- GEMINI /extract ENDPOINT ERROR ---")
-        print(f"Error type: {type(e).__name__}")
-        print(f"Error message: {str(e)}")
-        traceback.print_exc()
-        print("--------------------------------------\n")
-        # Always return valid JSON
-        return JSONResponse(content={"error": f"Gemini API error: {str(e)}"}, status_code=500)
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+
+    finally:
+        # 8. THE SAFETY NET: This runs even if the code crashes
+        if cap:
+            cap.release()
+        if video_path and os.path.exists(video_path):
+            os.remove(video_path)
+        
+        # Force Python to release all unused RAM back to Render
+        gc.collect()

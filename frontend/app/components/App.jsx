@@ -16,6 +16,7 @@ const DENSITIES = {
   lamp: 40,
   default: 80
 }
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_API;
 
 function Room({ magnitude }) {
   const rigidBody = useRef()
@@ -49,7 +50,6 @@ function App() {
   const [advice, setAdvice] = useState("");
   const [detections, setDetections] = useState([]);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [previewImage, setPreviewImage] = useState(null)
   const [detectedObjects, setDetectedObjects] = useState([])
   const [loading, setLoading] = useState(false)
   const [status, setStatus] = useState("Waiting for video upload...")
@@ -61,70 +61,60 @@ function App() {
     setMode(params.get("mode") || "laptop");
   }, []);
 
-  async function generateRoomData(prompt, frames) {
-    const res = await fetch("/api/extract", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt, frames })
-    });
-    const data = await res.json();
-    if (data.text) return data.text;
-    throw new Error(data.error || "Unknown AI error");
-  }
+  useEffect(() => {
+    const wakeUpServer = async () => {
+      try {
+        // Just a simple GET to trigger the Render instance
+        await fetch(`${BACKEND_URL}/state`);
+        console.log("Backend instance warmed up.");
+      } catch (err) {
+        console.error("Server is still sleeping or unreachable.");
+      }
+    };
+
+    wakeUpServer();
+  }, []);
 
   const analyzeVideo = async (file) => {
     setLoading(true)
     setStatus("Extracting Spatial Data...")
 
     try {
-      const video = document.createElement('video')
-      video.src = URL.createObjectURL(file)
-      video.muted = true
-      video.playsInline = true
-      video.crossOrigin = "anonymous"
-
-      await new Promise(r => video.onloadedmetadata = r)
-
-      const canvas = document.createElement('canvas')
-      const ctx = canvas.getContext('2d')
-      const frames = []
-      const captureTimes = [0.1, video.duration * 0.5, video.duration - 0.2]
-
-      for (const time of captureTimes) {
-        video.currentTime = time
-        await new Promise(r => video.onseeked = r)
-        canvas.width = video.videoWidth
-        canvas.height = video.videoHeight
-        ctx.drawImage(video, 0, 0)
-        const base64 = canvas.toDataURL('image/jpeg', 0.4).split(',')[1]
-        frames.push({ inlineData: { data: base64, mimeType: "image/jpeg" } })
-        if (time === 0.1) setPreviewImage(canvas.toDataURL('image/jpeg'))
-      }
-
-      setStatus("Mapping Room...")
-
       const prompt = `
         Act as a 3D LiDAR scanner. Identify major structural objects:
         Types: [bookshelf, refrigerator, chair, table, lamp, tv, sofa, monitor]
         
         For each object, estimate:
-        1. type: (from the list above)
-        2. size: [width, height, depth] in meters (Scale them up slightly for presence).
-        3. color: Primary HEX code.
-        4. x, z: Coordinates (-12 to 12).
+        1. type
+        2. size: [width, height, depth] in meters
+        3. color: HEX
+        4. x, z coordinates (-12 to 12)
 
-        Return ONLY a JSON array: [{"type": "table", "size": [2.0, 0.8, 1.2], "color": "#ffffff", "x": -2, "z": -4}]
+        Return ONLY valid JSON array.
       `
 
-      const text = await generateRoomData(prompt, frames)
-      const jsonMatch = text.match(/\[.*\]/s)
+      const form = new FormData()
+      form.append("video", file)
+      form.append("prompt", prompt)
+
+      setStatus("Mapping Room...")
+
+      const res = await fetch(`${BACKEND_URL}/extract`, {
+        method: "POST",
+        body: form
+      })
+
+      const data = await res.json()
+      if (!data.text) throw new Error(data.error || "No AI response")
+
+      const jsonMatch = data.text.match(/\[.*\]/s)
       if (!jsonMatch) throw new Error("Invalid AI Spatial Response")
 
       const parsed = JSON.parse(jsonMatch[0])
-      
+
       const processed = parsed.map(obj => ({
         ...obj,
-        size: obj.size.map(s => Math.max(s * 1.2, 0.5)), 
+        size: obj.size.map(s => Math.max(s * 1.2, 0.5)),
         x: Number(obj.x) || 0,
         z: Number(obj.z) || 0
       }))
@@ -161,7 +151,7 @@ function App() {
       });
 
       if (imageSrc) {
-        const response = await fetch("/api/analyze", {
+        const response = await fetch(`${BACKEND_URL}/analyze`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ image: imageSrc, magnitude: parseFloat(magRef.current) })
@@ -205,7 +195,7 @@ function App() {
   };
 
   const getAdvice = async () => {
-    const res = await fetch("/api/recommend", {
+    const res = await fetch(`${BACKEND_URL}/recommend`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ detections: detectedObjects.map(obj => obj.type) })
@@ -215,13 +205,8 @@ function App() {
   };
 
   useEffect(() => {
-    const interval = setInterval(processFrame, 500);
-    return () => clearInterval(interval);
-  }, [magnitude]);
-
-  useEffect(() => {
     const sync = async () => {
-      const res = await fetch("/api/state");
+      const res = await fetch(`${BACKEND_URL}/state`);
       const state = await res.json();
       
       if (mode === "phone") {
@@ -339,7 +324,7 @@ function App() {
                 onChange={async (e) => {
                 const val = e.target.value;
                 setMagnitude(val);
-                await fetch("/api/update_magnitude", {
+                await fetch(`${BACKEND_URL}/update_magnitude`, {
                   method: "POST",
                   headers: {"Content-Type": "application/json"},
                   body: JSON.stringify({magnitude: val})
@@ -377,8 +362,6 @@ function App() {
         <pointLight position={[20, 20, 20]} castShadow intensity={1.5} />
 
         <Suspense fallback={null}>
-          {previewImage}
-
           <Physics gravity={[0, -9.81, 0]}>
             <Room magnitude={magnitude} />
 
